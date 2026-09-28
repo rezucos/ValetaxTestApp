@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Kafka implementation of the event bus: producer, outbox relay, consumer host with inbox, retries and DLT. -->
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Confluent.Kafka" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EventBus\EventBus.csproj" />
+    <ProjectReference Include="..\MessageLogEF\MessageLogEF.csproj" />
+    <ProjectReference Include="..\ValetaxTest.ServiceDefaults\ValetaxTest.ServiceDefaults.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="Google.Protobuf" />
+    <PackageReference Include="Grpc.Tools" PrivateAssets="all" />
+  </ItemGroup>
+
+  <!-- The .proto is owned by the server (Partners.API); the client stubs are generated from the linked file. -->
+  <ItemGroup>
+    <Protobuf Include="..\..\Partners\Partners.API\Proto\partners.proto" GrpcServices="Client" Link="Proto\partners.proto" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Commissions.Application\Commissions.Application.csproj" />
+    <ProjectReference Include="..\..\..\Libraries\EventBusKafka\EventBusKafka.csproj" />
+    <ProjectReference Include="..\..\..\Libraries\PersistencePostgres\PersistencePostgres.csproj" />
+  </ItemGroup>
+
+</Project>

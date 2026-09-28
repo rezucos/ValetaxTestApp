@@ -1,0 +1,41 @@
+## .NET
+bin/
+obj/
+out/
+publish/
+*.user
+*.suo
+*.userprefs
+*.DotSettings.user
+TestResults/
+*.trx
+*.coverage
+coverage*.xml
+
+## IDE
+.vs/
+.idea/
+.fleet/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Secrets and local settings (the committed configs contain only local test credentials)
+.env
+.env.*
+!.env.example
+secrets.json
+appsettings.*.local.json
+docker-compose.override.yml
+*.pfx
+*.p12
+*.pem
+*.key
+
+## Logs
+*.log
+logs/

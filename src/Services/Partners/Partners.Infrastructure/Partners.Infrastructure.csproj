@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Partners.Application\Partners.Application.csproj" />
+    <ProjectReference Include="..\..\..\Libraries\EventBusKafka\EventBusKafka.csproj" />
+    <ProjectReference Include="..\..\..\Libraries\PersistencePostgres\PersistencePostgres.csproj" />
+  </ItemGroup>
+
+</Project>

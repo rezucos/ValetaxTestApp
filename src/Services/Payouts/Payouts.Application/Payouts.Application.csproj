@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Payouts.Domain\Payouts.Domain.csproj" />
+    <ProjectReference Include="..\..\..\Libraries\EventBus\EventBus.csproj" />
+  </ItemGroup>
+
+</Project>

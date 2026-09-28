@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Core types of every service: domain primitives, application exceptions and persistence ports.
+       The only dependency is FluentValidation: its ValidationException is the validation error of every service. -->
+
+  <ItemGroup>
+    <PackageReference Include="FluentValidation" />
+  </ItemGroup>
+
+</Project>

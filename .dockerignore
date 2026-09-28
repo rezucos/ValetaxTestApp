@@ -1,0 +1,16 @@
+**/bin/
+**/obj/
+**/out/
+**/publish/
+**/TestResults/
+**/*.user
+**/.vs/
+**/.idea/
+**/.vscode/
+.git/
+.gitignore
+deploy/
+scripts/
+*.md
+docker-compose*.yml
+Dockerfile

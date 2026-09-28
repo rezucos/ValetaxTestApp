@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package valetaxtest.commissions.v1;
+
+option csharp_namespace = "ValetaxTest.Commissions.API.Grpc";
+
+// Queries of accrued commissions for other services.
+service CommissionsLedger {
+  // Partners that have accrued (not yet reserved or paid) commissions, sorted by id.
+  // For the next page pass the last received id as after_partner_id.
+  rpc ListPartnersWithAccruedCommissions (ListPartnersWithAccruedCommissionsRequest)
+      returns (ListPartnersWithAccruedCommissionsReply);
+}
+
+message ListPartnersWithAccruedCommissionsRequest {
+  int32 page_size = 1;
+  string after_partner_id = 2;
+}
+
+message ListPartnersWithAccruedCommissionsReply {
+  repeated string partner_ids = 1;
+  bool has_more = 2;
+}

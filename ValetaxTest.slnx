@@ -1,0 +1,59 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+    <File Path="docker-compose.yml" />
+    <File Path="Dockerfile" />
+    <File Path="global.json" />
+    <File Path="README.md" />
+    <File Path="README.ru.md" />
+  </Folder>
+  <Folder Name="/src/" />
+  <Folder Name="/src/ApiGateway/">
+    <Project Path="src/ApiGateway/ApiGateway.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/" />
+  <Folder Name="/src/Services/Commissions/">
+    <Project Path="src/Services/Commissions/Commissions.API/Commissions.API.csproj" />
+    <Project Path="src/Services/Commissions/Commissions.Application/Commissions.Application.csproj" />
+    <Project Path="src/Services/Commissions/Commissions.Domain/Commissions.Domain.csproj" />
+    <Project Path="src/Services/Commissions/Commissions.Infrastructure/Commissions.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/Events/">
+    <Project Path="src/Services/Events/Events.API/Events.API.csproj" />
+    <Project Path="src/Services/Events/Events.Application/Events.Application.csproj" />
+    <Project Path="src/Services/Events/Events.Domain/Events.Domain.csproj" />
+    <Project Path="src/Services/Events/Events.Infrastructure/Events.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/Partners/">
+    <Project Path="src/Services/Partners/Partners.API/Partners.API.csproj" />
+    <Project Path="src/Services/Partners/Partners.Application/Partners.Application.csproj" />
+    <Project Path="src/Services/Partners/Partners.Domain/Partners.Domain.csproj" />
+    <Project Path="src/Services/Partners/Partners.Infrastructure/Partners.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/Payouts/">
+    <Project Path="src/Services/Payouts/Payouts.API/Payouts.API.csproj" />
+    <Project Path="src/Services/Payouts/Payouts.Application/Payouts.Application.csproj" />
+    <Project Path="src/Services/Payouts/Payouts.Domain/Payouts.Domain.csproj" />
+    <Project Path="src/Services/Payouts/Payouts.Infrastructure/Payouts.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/Wallets/">
+    <Project Path="src/Services/Wallets/Wallets.API/Wallets.API.csproj" />
+    <Project Path="src/Services/Wallets/Wallets.Application/Wallets.Application.csproj" />
+    <Project Path="src/Services/Wallets/Wallets.Domain/Wallets.Domain.csproj" />
+    <Project Path="src/Services/Wallets/Wallets.Infrastructure/Wallets.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Libraries/">
+    <Project Path="src/Libraries/Core/Core.csproj" />
+    <Project Path="src/Libraries/EventBus/EventBus.csproj" />
+    <Project Path="src/Libraries/EventBusKafka/EventBusKafka.csproj" />
+    <Project Path="src/Libraries/MessageLogEF/MessageLogEF.csproj" />
+    <Project Path="src/Libraries/PersistencePostgres/PersistencePostgres.csproj" />
+    <Project Path="src/Libraries/ValetaxTest.ServiceDefaults/ValetaxTest.ServiceDefaults.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Commissions.UnitTests/Commissions.UnitTests.csproj" />
+    <Project Path="tests/Payouts.UnitTests/Payouts.UnitTests.csproj" />
+  </Folder>
+</Solution>

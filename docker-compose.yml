@@ -1,0 +1,234 @@
+name: valetaxtest
+
+# ---------------------------------------------------------------------------------------------------
+# Shared settings of the .NET services
+# ---------------------------------------------------------------------------------------------------
+x-dotnet-service: &dotnet-service
+  restart: unless-stopped
+  # Graceful shutdown: on SIGTERM the host has 30 s (Service:ShutdownTimeout) to drain HTTP requests,
+  # finish in-flight Kafka messages, commit offsets and flush the producer.
+  stop_grace_period: 40s
+  healthcheck:
+    test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://localhost:8080/health/ready"]
+    interval: 5s
+    timeout: 3s
+    retries: 30
+    start_period: 10s
+  depends_on:
+    postgres:
+      condition: service_healthy
+    kafka-init:
+      condition: service_completed_successfully
+
+x-dotnet-environment: &dotnet-environment
+  ASPNETCORE_ENVIRONMENT: Production
+  Kafka__BootstrapServers: kafka:9092
+  # Traces, metrics and logs go to the Aspire Dashboard over OTLP; metrics every 5 s instead of the default 60 s.
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://aspire-dashboard:18889
+  OTEL_METRIC_EXPORT_INTERVAL: 5000
+
+services:
+  # -------------------------------------------------------------------------------------------------
+  # Infrastructure
+  # -------------------------------------------------------------------------------------------------
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    command: ["postgres", "-c", "max_connections=300"]
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./deploy/postgres/init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql:ro
+    healthcheck:
+      # TCP check: during the first start init scripts run on a socket-only server, so this passes
+      # only when the databases of all services exist.
+      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-U", "postgres"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+
+  kafka:
+    image: apache/kafka:4.1.2
+    restart: unless-stopped
+    environment:
+      # Single-node KRaft cluster (no ZooKeeper).
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://localhost:${KAFKA_EXTERNAL_PORT:-29092}
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      # Topics are created explicitly by kafka-init.
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_HEAP_OPTS: "-Xms512m -Xmx512m"
+      CLUSTER_ID: 4L6g3nShT-eMCtK--X86sw
+    ports:
+      - "${KAFKA_EXTERNAL_PORT:-29092}:29092"
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null 2>&1"]
+      interval: 5s
+      timeout: 10s
+      retries: 30
+      start_period: 10s
+
+  kafka-init:
+    image: apache/kafka:4.1.2
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      BOOTSTRAP_SERVERS: kafka:9092
+      PARTITIONS: 6
+    volumes:
+      - ./deploy/kafka/create-topics.sh:/create-topics.sh:ro
+    entrypoint: ["/bin/sh", "/create-topics.sh"]
+    restart: "no"
+
+  kafka-ui:
+    image: kafbat/kafka-ui:v1.5.0
+    restart: unless-stopped
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      KAFKA_CLUSTERS_0_NAME: valetaxtest
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+    ports:
+      - "${KAFKA_UI_PORT:-8088}:8080"
+
+  pgadmin:
+    image: dpage/pgadmin4:9.18.0
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@valetaxtest.dev}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+      # The PostgreSQL server is registered from servers.json on every start; its password comes from
+      # the pgpass file, which pgAdmin copies into the user's storage on first start ("passfile": "/.pgpass").
+      PGADMIN_REPLACE_SERVERS_ON_STARTUP: "True"
+      PGPASS_FILE: /pgpass
+      # No mail server locally: password reset e-mails are not needed.
+      PGADMIN_DISABLE_POSTFIX: "true"
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+      - ./deploy/pgadmin/servers.json:/pgadmin4/servers.json:ro
+      - ./deploy/pgadmin/pgpass:/pgpass:ro
+    healthcheck:
+      test: ["CMD", "wget", "-qO", "/dev/null", "http://localhost/misc/ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
+
+  aspire-dashboard:
+    image: mcr.microsoft.com/dotnet/aspire-dashboard:13.5.2
+    restart: unless-stopped
+    environment:
+      # Local setup: the UI opens without a login token and OTLP accepts telemetry without an API key
+      # (the OTLP port 18889 is reachable only inside the compose network).
+      ASPIRE_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS: "true"
+    ports:
+      - "${DASHBOARD_PORT:-18888}:18888"
+
+  # -------------------------------------------------------------------------------------------------
+  # Services (no host ports: everything goes through the gateway, so every service can be scaled out:
+  #   docker compose up -d --scale commissions=3 --scale wallets=2)
+  # -------------------------------------------------------------------------------------------------
+  partners:
+    <<: *dotnet-service
+    build:
+      context: .
+      target: partners
+    image: valetaxtest/partners:local
+    environment:
+      <<: *dotnet-environment
+      ConnectionStrings__Database: Host=postgres;Database=partners;Username=partners;Password=partners
+
+  events:
+    <<: *dotnet-service
+    build:
+      context: .
+      target: events
+    image: valetaxtest/events:local
+    environment:
+      <<: *dotnet-environment
+      ConnectionStrings__Database: Host=postgres;Database=events;Username=events;Password=events
+      Services__Partners__GrpcAddress: dns:///partners:8081
+
+  commissions:
+    <<: *dotnet-service
+    build:
+      context: .
+      target: commissions
+    image: valetaxtest/commissions:local
+    environment:
+      <<: *dotnet-environment
+      ConnectionStrings__Database: Host=postgres;Database=commissions;Username=commissions;Password=commissions
+      Services__Partners__GrpcAddress: dns:///partners:8081
+      Commissions__MaxLevels: 10
+
+  wallets:
+    <<: *dotnet-service
+    build:
+      context: .
+      target: wallets
+    image: valetaxtest/wallets:local
+    environment:
+      <<: *dotnet-environment
+      ConnectionStrings__Database: Host=postgres;Database=wallets;Username=wallets;Password=wallets
+
+  payouts:
+    <<: *dotnet-service
+    build:
+      context: .
+      target: payouts
+    image: valetaxtest/payouts:local
+    environment:
+      <<: *dotnet-environment
+      ConnectionStrings__Database: Host=postgres;Database=payouts;Username=payouts;Password=payouts
+      Services__Commissions__GrpcAddress: dns:///commissions:8081
+      # Short period for the demo; a real program would pay out daily or weekly.
+      Payouts__Interval: ${PAYOUT_INTERVAL:-00:00:30}
+      Payouts__StepTimeout: "00:00:30"
+
+  gateway:
+    <<: *dotnet-service
+    build:
+      context: .
+      target: gateway
+    image: valetaxtest/gateway:local
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://aspire-dashboard:18889
+      OTEL_METRIC_EXPORT_INTERVAL: 5000
+    ports:
+      - "${GATEWAY_PORT:-8080}:8080"
+    depends_on:
+      partners:
+        condition: service_healthy
+      events:
+        condition: service_healthy
+      commissions:
+        condition: service_healthy
+      wallets:
+        condition: service_healthy
+      payouts:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
+  pgadmin-data:

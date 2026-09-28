@@ -1,0 +1,18 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "ValetaxTest",
+      "Group": "Servers",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "postgres",
+      "Username": "postgres",
+      "Comment": "Databases of all services: partners, events, commissions, wallets, payouts.",
+      "ConnectionParameters": {
+        "sslmode": "prefer",
+        "connect_timeout": 10,
+        "passfile": "/.pgpass"
+      }
+    }
+  }
+}

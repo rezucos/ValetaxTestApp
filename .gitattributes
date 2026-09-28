@@ -1,0 +1,4 @@
+# Files used inside Linux containers keep LF line endings on every OS (a CRLF breaks sh scripts and pgpass).
+* text=auto
+*.sh text eol=lf
+deploy/pgadmin/pgpass text eol=lf

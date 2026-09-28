@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Transport-agnostic messaging abstractions used by the Application layer: handlers, outbox port, JSON format. -->
+
+</Project>
